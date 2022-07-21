@@ -1,0 +1,193 @@
+#03Av Fund CP
+#importa pacotes
+import pandas as pd
+import random
+import numpy
+from babel.numbers import format_currency
+from tabulate import tabulate
+
+
+#carrega arquivo e define exibiçao tabela
+tabela = pd.read_csv(r'/2019-gastos-deputados.csv', sep = (';'))
+pd.set_option('display.max_columns', None)
+
+#formata valores como monetarios
+'''tabela['vlrDocumento'] = tabela['vlrDocumento'].apply(lambda x: format_currency(x, currency="BRL", locale="pt_BR"))
+tabela['vlrGlosa'] = tabela['vlrGlosa'].apply(lambda x: format_currency(x, currency="BRL", locale="pt_BR"))
+tabela['vlrLiquido'] = tabela['vlrLiquido'].apply(lambda x: format_currency(x, currency="BRL", locale="pt_BR"))'''
+
+
+#renomeia colunas
+tabela.rename(columns = {'txNomeParlamentar': 'Nome do Parlamentar', 'ideCadastro': 'N° de Cadastro','nuCarteiraParlamentar': 'Carteira Parlamentar', 'nuLegislatura': 'Ano Legislatura', 'sgUF': 'UF', 'sgPartido': 'Partido', 'codLegislatura': 'Cód. Legislatura', 'numSubCota': 'N° Cota', 'txtDescricao': 'Descrição', 'numEspecificacaoSubCota': 'N° Espec. Cota', 'numMes': 'Mês', 'numAno': 'Ano', 'numParcela': 'N° Parcela', 'numLote': 'Lote', 'nuDeputadoId': 'ID Deputado', 'ideDocumento': 'Documento', 'datEmissao': 'Emissão', 'vlrDocumento': 'Valor do Documento'}, inplace = True)
+
+#menu de opçoes
+def menu():
+    opt_menu = {
+    0: 'Verificar ausência de valores.',
+    1: 'Exibir amostra',
+    2: 'preenche nulos',
+    3: 'contar total por tipos',
+    4: 'sub menu apagar/substituir',
+    9: 'Sair',
+    }
+    for key in opt_menu.keys():
+        print ('[', key, ']', ' ', opt_menu[key] )
+
+def subMenu():
+    opt_subMenu = {
+        1: 'Exibir do Início',
+        2: 'Exibir do Final',
+        3: 'Anterior',
+    }
+    for key in opt_subMenu.keys():
+        print ('[', key, ']', ' ', opt_subMenu[key] )
+
+def subMenuDois():
+    opt_subMenuDois = {
+        1: 'selecionar/exibir linha',
+        2: 'apagar valores linha',
+        3: 'substituir por random',
+        4: 'Anterior',
+    }
+    for key in opt_subMenuDois.keys():
+        print ('[', key, ']', ' ', opt_subMenuDois[key] )
+
+def opcao1():
+    try:
+        opt2 = int(input('Selecione uma opção do submenu: '))
+    except:
+        print('entrada inválida, insira um numero...') 
+    
+    if opt2 == 1:
+        print(tabulate(tabela.head(), headers = 'keys', tablefmt = 'github'))
+
+    elif opt2 == 2:
+        print(tabulate(tabela.tail(), headers = 'keys', tablefmt = 'github'))
+
+    elif opt2 == 3:
+        #goto
+        pass
+    else:
+        print('opção invalida')
+
+def opcao4():
+    #declara variavel global
+    global linha
+
+    try:
+        opt3 = int(input('Selecione uma opção do submenu: '))
+    except:
+        print('entrada inválida, insira um numero...')
+    if opt3 == 1:
+        try:
+            #seleciona exibe linha
+            aux = int(input('insira numero da linha a ser selecionada e exibida:  '))
+        except:
+            print('entrada inválida, insira um numero...')
+        linha = aux
+        print(tabulate(tabela.iloc[[linha]], headers = 'keys', tablefmt = 'github'))
+        opcao4()
+    elif opt3 == 2:
+        try:
+            #seleciona exibe linha
+            aux = int(input('insira numero da linha a ser selecionada e exibida:  '))
+        except:
+            print('entrada inválida, insira um numero...')
+        linha = aux
+        tabela.iloc[linha]=None
+        print(tabulate(tabela.iloc[[linha]], headers = 'keys', tablefmt = 'github'))
+        opcao4()
+    elif opt3 == 3:
+        try:
+            #seleciona exibe linha
+            aux = int(input('insira numero da linha a ser selecionada e exibida:  '))
+        except:
+            print('entrada inválida, insira um numero...')
+        linha = aux
+        #uso de RAM excessivo
+        '''colunas = tabela.sample(frac=1, axis='columns')'''
+        tabela.loc[linha] = random.randrange(1,9)
+        print(tabulate(tabela.iloc[[linha]], headers = 'keys', tablefmt = 'github'))
+        opcao4()
+    else:
+      print('opção invalida')
+
+#testa variavel name executa apenas se for main (util em codigos com varios modulos)
+if __name__=='__main__':
+    while (True):
+        menu()
+        opt=''
+        opt2=''
+        opt3=''
+        aux=''
+        linha=''
+        try:
+            opt = int(input('Selecione uma opção: ')) 
+        except:
+            print('entrada inválida, insira um numero...')
+
+        if opt == 0:
+            tabelaaux = tabela[tabela.isnull().any(axis=1)]
+            print(tabulate(tabelaaux.head(5), headers = 'keys', tablefmt = 'github'))
+
+        elif opt == 1:
+            subMenu()
+            opcao1()
+            
+        elif opt == 2:
+            #substitui NaNs por valor definido limitado
+            print(tabulate(tabela.fillna('X', limit=20).head(), headers = 'keys', tablefmt = 'github'))
+
+        #apresenta tipos por coluna
+        elif opt == 3:
+            #identifica e contabiliza
+            cont = tabela[tabela.columns].count()
+            tabela = tabela.dtypes
+            #transforma em DF
+            cont = cont.to_frame(name='Quantidade')
+            tabela = tabela.to_frame(name='Tipo')
+            #une colunas
+            tabela = tabela.join(cont)   
+            print(tabulate(tabela, headers = 'keys', tablefmt = 'github'))
+
+
+        elif opt == 4:
+            subMenuDois()
+            opcao4()
+
+        elif opt == 9:
+            quit()
+            break     
+        else:
+            print('opção invalida')
+    pass
+
+
+"""
+Tarefas do projeto:
+
+Instalar e importar a API Pandas; ok
+
+Carregar a base de dados (arquivo na extensão .csv) pela API Pandas; ok
+
+Apresentar apenas as 5 primeiras linhas de informações da base de dados; ok
+
+Nomear adequadamente as colunas via API Pandas; ok
+
+Verificar a ausência de valores na base de dados; ok
+
+Inserir valores adequados na ausência de valores na base de dados; ok      adequados ??? colocar dados da coluna nome na coluna partido
+
+Desenvolver um menu (console) para acessar as principais funcionalidades do aplicativo (não há necessidade de desenvolver interface gráfica); ok
+
+Desenvolver recursos adicionais conforme a necessidade de cada base de dados. ok
+
+Mostrar as 5 últimas linhas da base de dados; ok
+
+Mostrar a quantidade de cada tipo de dados por coluna; OK
+
+Criar uma função que remova os valores de uma linha sem usar drop(); ok
+Criar uma função que adicione valores aleatórios em uma linha da base de dados; ok
+
+Desenvolver recursos adicionais. ok
+"""
